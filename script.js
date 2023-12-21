@@ -1,4 +1,3 @@
-
 const addExpenseButton = document.getElementById("add-expense-button");
 
 const descriptionInput = document.getElementById("description");
@@ -8,6 +7,8 @@ const selectInput = document.getElementById("type");
 const incomeList = document.getElementById("income-list");
 const expenseList = document.getElementById("expense-list");
 const totalIncome = document.getElementById("total-income");
+const totalExpense = document.getElementById("total-expense");
+const totalBudget = document.getElementById("total-budget");
 
 function formatMoney(value) {
   return Math.abs(Number(value)).toLocaleString(undefined, {
@@ -31,30 +32,73 @@ calculateIncome();
 /**
  * Task 1: Calculate total expense
  */
-function calculateExpense() {}
+function calculateExpense() {
+  let sum = 0;
+  for (let item of expenseList.children) {
+    const valueString =
+      item.children[0].children[1].children[0].innerHTML.replace(/,/g, "");
+
+    console.log(parseFloat(valueString));
+
+    sum += parseFloat(valueString);
+  }
+  totalExpense.innerHTML = formatMoney(sum);
+}
+calculateExpense();
 
 /**
  * Task 2: Calculate the budget
  */
 
-function calculateBudget() {}
+function calculateBudget() {
+  const totalIncomeValue = parseFloat(totalIncome.innerHTML.replace(/,/g, ""));
+  const totalExpenseValue = parseFloat(totalExpense.innerHTML.replace(/,/g, ""));
+  if (totalIncomeValue < totalExpenseValue ) {
+    alert("Warning: Your total expenses exceed the total income.");
+  }
+  const budget = totalIncomeValue - totalExpenseValue;
+  totalBudget.innerHTML = formatMoney(budget);
+}
+calculateBudget();
 
 /**
  * Task 3: Delete Entry
  */
-function deleteEntry() {}
+
+document.body.addEventListener("click", function (event) {
+  if (event.target.classList.contains('text-red-500')) {
+    const listItem = event.target.closest('li');
+    if (listItem) {
+      deleteEntry(listItem);
+    }
+  }
+});
+
+
+function deleteEntry(listItem) {
+  const list = listItem.parentElement;
+  const valueString = listItem.querySelector(".text-green-600, .text-red-600").innerHTML.replace(/,/g, "");
+  const values = parseFloat(valueString);
+  list.removeChild(listItem);
+
+  if (list.id === "income-list") {
+    calculateIncome();
+  } else if (list.id === "expense-list") {
+    calculateExpense();
+  }
+  calculateBudget();
+}
 
 function addEntry() {
   const type = selectInput.value;
   const description = descriptionInput.value;
-  const value = valueInput.value;
+  const values = valueInput.value;
 
-  // data validation
   const errors = [];
   if (description.length === 0) {
     errors.push("Please enter the description");
   }
-  if (value.length === 0) {
+  if (values.length === 0) {
     errors.push("Please enter the value");
   }
   if (errors.length > 0) {
@@ -62,7 +106,6 @@ function addEntry() {
     return;
   }
 
-  // insert entry
   const list = type === "income" ? incomeList : expenseList;
   const sign = type === "income" ? "+" : "-";
   const colorClass = type === "income" ? "text-green-600" : "text-red-600";
@@ -72,7 +115,7 @@ function addEntry() {
       <div class="group flex justify-between gap-2 text-sm">
         <span>${description}</span>
         <div>
-          <span class="${colorClass}">${sign}${formatMoney(value)}</span>
+          <span class="${colorClass}">${sign}${formatMoney(values)}</span>
           <span
             class="ml-2 hidden cursor-pointer font-medium text-red-500 group-hover:inline-block"
           >
@@ -83,11 +126,10 @@ function addEntry() {
     </li>
     `;
 
-  // Approach 1:
   list.innerHTML += newEntryHtml;
-
-  // update total income value
   calculateIncome();
+  calculateExpense();
+  calculateBudget();
 }
-
 addExpenseButton.addEventListener("click", addEntry);
+
